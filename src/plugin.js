@@ -1,5 +1,3 @@
-const EMPTY_STATE = 'emptyState';
-
 module.exports = {
   install(Vue, options = {}) {
     if (!Vue._installedPlugins.find(plugin => plugin.Store)) {
@@ -11,18 +9,16 @@ module.exports = {
           done: [],
           undone: [],
           newMutation: true,
-          ignoreMutations: options.ignoreMutations|| []
+          rules: options.rules || [],
         };
       },
       created() {
         if (this.$store) {
           this.$store.subscribe(mutation => {
-            if (mutation.type !== EMPTY_STATE && this.ignoreMutations.indexOf(mutation.type) === -1) {
-              this.done.push(mutation);
-            }
-            if (this.newMutation) {
-              this.undone = [];
-            }
+            const inRules = (this.rules
+              .findIndex(rule => rule.from === mutation.type) !== -1);
+            if (inRules) this.done.push(mutation);
+            if (this.newMutation) this.undone = [];
           });
         }
       },
@@ -48,22 +44,38 @@ module.exports = {
           this.newMutation = true;
         },
         undo() {
-          this.undone.push(this.done.pop());
+          const commit = this.done.pop();
+          const rule = this.rules.find(rule => rule.from === commit.type);
+
+          this.undone.push(commit);
           this.newMutation = false;
-          this.$store.commit(EMPTY_STATE);
-          this.done.forEach(mutation => {
-            switch (typeof mutation.payload) {
-              case 'object':
-                this.$store.commit(`${mutation.type}`, Object.assign({}, mutation.payload));
-                break;
-              default:
-                this.$store.commit(`${mutation.type}`, mutation.payload);
+
+          let payload;
+          switch (typeof commit.payload) {
+            case 'object': {
+              payload = Object.assign({}, commit.payload);
+              if (Object.prototype.hasOwnProperty.call(rule, 'mapPayload')) {
+                const newPayload = {};
+                for (const [key, value] of Object.entries(rule.mapPayload)) {
+                  newPayload[key] = payload[value];
+                }
+                payload = newPayload;
+              }
+              break;
             }
-            this.done.pop();
-          });
+            default: {
+              payload = commit.payload;
+            }
+          }
+
+          this.$store.commit(rule.to, payload);
           this.newMutation = true;
-        }
-      }
+        },
+        reset() {
+          this.undone = [];
+          this.done = [];
+        },
+      },
     });
   },
 }
