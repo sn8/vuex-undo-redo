@@ -17,7 +17,7 @@ module.exports = {
           this.$store.subscribe(mutation => {
             const inRules = (this.rules
               .findIndex(rule => rule.from === mutation.type) !== -1);
-            if (inRules) this.done.push(mutation);
+            if (inRules) this.done.push(Object.assign({}, mutation));
             if (this.newMutation) this.undone = [];
           });
         }
@@ -34,13 +34,7 @@ module.exports = {
         redo() {
           let commit = this.undone.pop();
           this.newMutation = false;
-          switch (typeof commit.payload) {
-            case 'object':
-              this.$store.commit(`${commit.type}`, Object.assign({}, commit.payload));
-              break;
-            default:
-              this.$store.commit(`${commit.type}`, commit.payload);
-          }
+          this.$store.commit(commit.type, commit.payload);
           this.newMutation = true;
         },
         undo() {
@@ -50,28 +44,27 @@ module.exports = {
           this.undone.push(commit);
           this.newMutation = false;
 
-          let payload;
           switch (typeof commit.payload) {
             case 'object': {
-              payload = Object.assign({}, commit.payload);
+              const payload = Object.assign({}, commit.payload);
               if (Object.prototype.hasOwnProperty.call(rule, 'mapPayload')) {
-                const newPayload = {};
                 for (const [key, value] of Object.entries(rule.mapPayload)) {
-                  newPayload[key] = payload[value];
+                  payload[key] = typeof commit.payload[value] === 'object'
+                    ? Object.assign({}, commit.payload[value])
+                    : commit.payload[value];
                 }
-                payload = newPayload;
               }
+              this.$store.commit(rule.to, payload);
               break;
             }
             default: {
-              payload = commit.payload;
+              this.$store.commit(rule.to, commit.payload);
             }
           }
-
-          this.$store.commit(rule.to, payload);
+          
           this.newMutation = true;
         },
-        reset() {
+        resetUndoRedo() {
           this.undone = [];
           this.done = [];
         },
