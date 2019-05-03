@@ -7,11 +7,11 @@
     "build": "rimraf ./dist && webpack --config ./webpack.config.js",
     "test": "jest"
   },
-  "author": "Anthony Gore",
+  "author": "Artem Sinkov <mailbox@trendytech.ru>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anthonygore/vuex-undo-redo"
+    "url": "git+https://github.com/sn8/vuex-undo-redo"
   },
   "devDependencies": {
     "@vue/test-utils": "^1.0.0-beta.25",
