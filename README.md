@@ -1,19 +1,13 @@
 # vuex-undo-redo
 
 A Vue.js plugin that allows you to undo or redo a mutation.
+Based on [anthonygore/vuex-undo-redo](https://github.com/anthonygore/vuex-undo-redo), but using another idea for undo or redo a mutations.
 
-> The building of this plugin is documented in the article *[Create A Vuex Undo/Redo For VueJS](https://vuejsdevelopers.com/2017/11/13/vue-js-vuex-undo-redo/)*
-
-## Live demos
-
-[![Edit Vuex Undo/Redo](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/vjo3xlpyny)
-
-There's also a demo in [this Codepen](https://codepen.io/anthonygore/pen/NwGmqJ). The source code for the demo is [here](https://github.com/anthonygore/vuex-undo-redo-example).
 
 ## Installation
 
 ```js
-npm i --save-dev vuex-undo-redo
+yarn add vuex-undo-redo
 ```
 
 ### Browser
@@ -22,56 +16,61 @@ npm i --save-dev vuex-undo-redo
 <script type="text/javascript" src="node_modules/vuex-undo-redo/dist/vuex-undo-redo.min.js"></script>
 ```
 
-### Module
-
-```js
-import VuexUndoRedo from 'vuex-undo-redo';
-```
-
-## Usage
+### Usage
 
 Since it's a plugin, use it like:
 
 ```js
-Vue.use(VuexUndoRedo);
+import VuexUndoRedo from 'vuex-undo-redo';
+
+Vue.use(VuexUndoRedo, {
+  rules: [
+    {
+      from: 'INSERT',
+      to: `DELETE`,
+    },
+    {
+      from: 'DELETE',
+      to: 'INSERT',
+    },
+    {
+      from: 'UPDATE',
+      to: 'UPDATE',
+      mapPayload: { oldValues: 'newValues', newValues: 'oldValues' },
+    },
+  ],
+});
+
 ```
 
-You must, of course, have the Vuex plugin installed as well, and it must be intalled before this plugin. You must also create a Vuex store which must implement a mutation `emptyState` which should revert the store back to the initial state e.g.:
+You must, of course, have the Vuex plugin installed as well, and it must be intalled before this plugin.
 
 ```js
 new Vuex.Store({
   state: {
-    myVal: null
+    elements: [],
   },
   mutations: {
-    emptyState() {
-      this.replaceState({ myval: null });       
-    }
-  }
+    /* "element" should be non-reactive */
+    INSERT(state, { index, element }) {
+      state.elements.splice(index, 0, element);   
+    },
+    /* "element" should be non-reactive */
+    DELETE(state, { index, element }) {
+      state.elements.splice(index, 1);
+    },
+    /* "newValues" and "oldValues" should be non-reactive */
+    UPDATE(state, { index, newValues, oldValues }) {
+      const element = state.elements[index];
+      for (const [key, value] of Object.entries(newValues)) {
+        element[key] = value;
+      }
+    },
+  },
 });
 ```
 
-### Ignoring mutations
-
-Occasionally, you may want to perform mutations without including them in the undo history (say you are working on an image editor and the user toggles grid visibility - you probably do not want this in undo history). The plugin has an `ignoredMutations` setting to leave these mutations out of the history:
-
-```js
-Vue.use(VuexUndoRedo, { ignoreMutations: [ 'toggleGrid' ]});
-```
-
-It's worth noting that this only means the mutations will not be recorded in the undo history. You must still manually manage your state object in the `emptyState` mutation:
-
-```js
-emptyState(state) {
-  this.replaceState({ myval: null, showGrid: state.showGrid });       
-}
-```
-
 ## API
-
-### Options
-
-`ignoredMutations` an array of mutations that the plugin will ignore
 
 ### Computed properties
 
@@ -84,3 +83,5 @@ emptyState(state) {
 `undo` undoes the last mutation
 
 `redo` redoes the last mutation
+
+`resetUndoRedo` resets the all history

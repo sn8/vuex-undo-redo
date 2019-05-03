@@ -24,10 +24,10 @@ module.exports = {
       },
       computed: {
         canRedo() {
-          return this.undone.length;
+          return this.undone.length > 0;
         },
         canUndo() {
-          return this.done.length;
+          return this.done.length > 0;
         }
       },
       methods: {
