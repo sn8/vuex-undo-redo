@@ -17,8 +17,10 @@ module.exports = {
           this.$store.subscribe(mutation => {
             const inRules = (this.rules
               .findIndex(rule => rule.from === mutation.type) !== -1);
-            if (inRules) this.done.push(Object.assign({}, mutation));
-            if (this.newMutation) this.undone = [];
+            if (inRules) {
+              this.done.push(Object.assign({}, mutation));
+              if (this.newMutation) this.undone = [];
+            }
           });
         }
       },
@@ -61,7 +63,7 @@ module.exports = {
               this.$store.commit(rule.to, commit.payload);
             }
           }
-          
+          this.done.pop();
           this.newMutation = true;
         },
         resetUndoRedo() {
