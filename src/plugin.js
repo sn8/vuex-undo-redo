@@ -36,6 +36,7 @@ module.exports = {
         redo() {
           let commit = this.undone.pop();
           this.newMutation = false;
+          commit.payload.isRedo = true;
           this.$store.commit(commit.type, commit.payload);
           this.newMutation = true;
         },
@@ -56,6 +57,7 @@ module.exports = {
                     : commit.payload[value];
                 }
               }
+              payload.isUndo = true;
               this.$store.commit(rule.to, payload);
               break;
             }
