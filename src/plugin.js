@@ -52,9 +52,7 @@ module.exports = {
               const payload = Object.assign({}, commit.payload);
               if (Object.prototype.hasOwnProperty.call(rule, 'mapPayload')) {
                 for (const [key, value] of Object.entries(rule.mapPayload)) {
-                  payload[key] = typeof commit.payload[value] === 'object'
-                    ? Object.assign({}, commit.payload[value])
-                    : commit.payload[value];
+                  payload[key] = commit.payload[value];
                 }
               }
               payload.isUndo = true;
